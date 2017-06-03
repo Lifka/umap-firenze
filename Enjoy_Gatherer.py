@@ -52,6 +52,8 @@ class Enjoy_Gatherer(Thread):
             try:
                 if (datetime.datetime.now() - self.session_start_time).total_seconds() < 3000:
                     self.current_feed = self.get_feed()
+                    self.to_DB()
+                    self.last_feed = self.current_feed
                 else:
                     try:
                         self.session.close()
@@ -66,6 +68,8 @@ class Enjoy_Gatherer(Thread):
                         self.sess_status = False                        
                     try:
                         self.current_feed = self.get_feed()
+                        self.to_DB()
+                        self.last_feed = self.current_feed
                     except:
                         print "Fail in getting feed"
             except:
@@ -113,8 +117,6 @@ class Enjoy_Gatherer(Thread):
                 
         while True:
             self.check_session()
-            self.to_DB()
-            self.last_feed = self.current_feed
             time.sleep(60)
 
 Enjoy_Gatherer(sys.argv[1]).start()
