@@ -24,13 +24,13 @@ stop_enjoy = False
 
 class Enjoy_Gatherer(Thread):
     
-    def __init__ (self, cities):
+    def __init__ (self, city):
 
         Thread.__init__(self)
         
         self.name = "enjoy"
-        self.cities = cities
-        self.sess_status = {city:False for city in self.cities}
+        self.city = city
+        self.sess_status = False
         
     def log_message (self, scope, status):
         
@@ -43,26 +43,29 @@ class Enjoy_Gatherer(Thread):
         
     def check_session (self):        
 
-        if not self.sess_status[self.city]:
+        if not self.sess_status:
             self.start_session()
-            self.sess_status[self.city] = True
+            self.sess_status = True
             self.session_start_time = datetime.datetime.now()
             
         else:
             try:
                 if (datetime.datetime.now() - self.session_start_time).total_seconds() < 3000:
-                    self.get_feed()
+                    self.current_feed = self.get_feed()
                 else:
                     try:
                         self.session.close()
+                        self.sess_status = False                        
                     except:
                         print "Fail in closing session"
                     try:
                         self.start_session()
+                        self.sess_status = True
                     except:
                         print "Fail in reopening session"
+                        self.sess_status = False                        
                     try:
-                        self.get_feed()
+                        self.current_feed = self.get_feed()
                     except:
                         print "Fail in getting feed"
             except:
@@ -109,21 +112,9 @@ class Enjoy_Gatherer(Thread):
     def run(self):
                 
         while True:
-            for city in ["milano"]:
-                self.city = city
-                self.check_session()
-                self.current_feed = self.get_feed()
-                self.to_DB()
-                self.last_feed = self.current_feed
-                time.sleep(1)
+            self.check_session()
+            self.to_DB()
+            self.last_feed = self.current_feed
             time.sleep(60)
 
-enjoy_cities = [
-                    "milano",
-                    "torino",
-                    "roma",
-                    "firenze",
-                    "catania"
-                ]
-
-Enjoy_Gatherer(enjoy_cities).start()
+Enjoy_Gatherer(sys.argv[1]).start()
