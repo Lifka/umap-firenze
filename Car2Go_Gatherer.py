@@ -25,13 +25,12 @@ stop_car2go = False
 class Car2Go_Gatherer(Thread):
 
     
-    def __init__ (self, cities):
+    def __init__ (self, city):
 
         Thread.__init__(self)
         
         self.name = "car2go"
-        self.cities = cities
-        self.sess_status = {city:False for city in self.cities}
+        self.city = city
         
     def log_message (self, scope, status):
         
@@ -40,41 +39,17 @@ class Car2Go_Gatherer(Thread):
                             self.name,\
                             self.city,\
                             scope,\
-                            status)        
-        
-    def check_session (self):        
-
-        if not self.sess_status[self.city]:
-            self.sess_status[self.city] = True
-            self.start_session()
-            self.session_start_time = datetime.datetime.now()
-            
-#        if (datetime.datetime.now() - self.session_start_time).total_seconds() > 600:
-#            self.session = self.session.close()
-#            self.start_session()
-#            self.session_start_time = datetime.datetime.now()
-        
-    def start_session (self):
-
-        self.url_home = 'https://www.car2go.com/api/v2.1/vehicles?oauth_consumer_key=polito&format=json&loc=' + self.city
-                
-        try:
-            self.session = requests.Session()
-            self.session.get(self.url_home)
-            self.session_start_time = datetime.datetime.now()
-            message = self.log_message("session","success")
-        except:
-            message = self.log_message("session","error")
-        print message
+                            status)
             
     def get_feed (self):
         
-        self.url_data = self.url_home
+        self.url = 'https://www.car2go.com/api/v2.1/vehicles?oauth_consumer_key=polito&format=json&loc=' + self.city
         
         try:
-            feed = json.loads(self.session.get(self.url_data).text)
+            feed = json.loads(requests.get(self.url).text)
             message = self.log_message("feed","success")
         except:
+            print_exception()
             feed = {}
             message = self.log_message("feed","error")
         print message
@@ -93,42 +68,11 @@ class Car2Go_Gatherer(Thread):
                     )
         
     def run(self):
-
                 
         while True:
-            for city in self.cities:
-                self.city = city
-                self.check_session()
-                self.current_feed = self.get_feed()
-                self.to_DB()
-                self.last_feed = self.current_feed
+            self.current_feed = self.get_feed()
+            self.to_DB()
+            self.last_feed = self.current_feed
             time.sleep(60)
 
-
-car2go_cities = [
-                    "wien",
-                    "calgary",
-                    "montreal",
-                    "vancouver",
-                    "hamburg",
-                    "berlin",
-                    "frankfurt",
-                    "muenchen",
-                    "rheinland",
-                    "stuttgart",
-                    "firenze",
-                    "torino",
-                    "milano",
-                    "roma",
-                    "amsterdam",
-                    "madrid",
-                    "austin",
-                    "columbus",
-                    "denver",
-                    "newyorkcity",
-                    "portland",
-                    "seattle",
-                    "washingtondc"
-                ]
-
-Car2Go_Gatherer(car2go_cities).start()
+Car2Go_Gatherer(sys.argv[1]).start()
