@@ -22,16 +22,18 @@ from DataBaseProxy import dbp
 
 stop_enjoy = False
 
-class Enjoy_Gatherer(Thread):
+class Enjoy_Gatherer():
     
     def __init__ (self, city):
-
-        Thread.__init__(self)
         
         self.name = "enjoy"
         self.city = city
-        self.sess_status = False
         
+        self.sess_status = False
+        self.start_session()
+        self.sess_status = True
+        self.session_start_time = datetime.datetime.now()       
+            
     def log_message (self, scope, status):
         
         return '[{}] -> {} {}: {} {}'\
@@ -40,41 +42,18 @@ class Enjoy_Gatherer(Thread):
                             self.city,\
                             scope,\
                             status)        
-        
-    def check_session (self):        
-
-        if not self.sess_status:
-            self.start_session()
-            self.sess_status = True
-            self.session_start_time = datetime.datetime.now()
-            
-        else:
-            try:
-                if (datetime.datetime.now() - self.session_start_time).total_seconds() < 3000:
-                    self.current_feed = self.get_feed()
-                    self.to_DB()
-                    self.last_feed = self.current_feed
-                else:
-                    try:
-                        self.session.close()
-                        self.sess_status = False                        
-                    except:
-                        print "Fail in closing session"
-                    try:
-                        self.start_session()
-                        self.sess_status = True
-                    except:
-                        print "Fail in reopening session"
-                        self.sess_status = False                        
-                    try:
-                        self.current_feed = self.get_feed()
-                        self.to_DB()
-                        self.last_feed = self.current_feed
-                    except:
-                        print "Fail in getting feed"
-            except:
-                print "FAIL"                        
-        
+                
+    def to_DB (self):
+    
+        dbp.insert("snapshots", 
+                   {
+                     "timestamp": datetime.datetime.now(),
+                     "provider": self.name,
+                     "city": self.city,
+                     "snapshot": self.current_feed
+                     }
+                    )
+                    
     def start_session (self):
 
         self.url_home = 'https://enjoy.eni.com/it/' + self.city + '/map/'
@@ -100,18 +79,40 @@ class Enjoy_Gatherer(Thread):
             message = self.log_message("feed","error")
         print message
 
-        return feed
-                
-    def to_DB (self):
-    
-        dbp.insert("snapshots", 
-                   {
-                     "timestamp": datetime.datetime.now(),
-                     "provider": self.name,
-                     "city": self.city,
-                     "snapshot": self.current_feed
-                     }
-                    )
+        self.current_feed = feed
+        
+    def check_session (self):        
+
+        if not self.sess_status:
+            self.start_session()
+            self.sess_status = True
+            self.session_start_time = datetime.datetime.now()            
+        else:
+            try:
+                if (datetime.datetime.now() - self.session_start_time).total_seconds() < 3000:
+                    self.get_feed()
+                    self.to_DB()
+                    self.last_feed = self.current_feed
+                else:
+                    try:
+                        self.session.close()
+                        self.sess_status = False                        
+                    except:
+                        print "Fail in closing session"
+                    try:
+                        self.start_session()
+                        self.sess_status = True
+                    except:
+                        print "Fail in restarting session"
+                        self.sess_status = False                        
+                    try:
+                        self.get_feed()
+                        self.to_DB()
+                        self.last_feed = self.current_feed
+                    except:
+                        print "Fail in getting feed"
+            except:
+                print "FAIL"
         
     def run(self):
                 
@@ -119,4 +120,13 @@ class Enjoy_Gatherer(Thread):
             self.check_session()
             time.sleep(60)
 
-Enjoy_Gatherer(sys.argv[1]).start()
+from conf import cities
+
+crawlers = {}
+for city in cities["enjoy"]:
+    crawlers[city] = Enjoy_Gatherer(city)
+
+while True:
+    for city in cities:
+        crawlers[city].check_session()
+    time.sleep(10)

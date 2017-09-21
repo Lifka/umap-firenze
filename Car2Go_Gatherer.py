@@ -20,17 +20,13 @@ import json
 
 from DataBaseProxy import dbp
 
-stop_car2go = False
-
-class Car2Go_Gatherer(Thread):
-
+class Car2Go_Gatherer():
     
     def __init__ (self, city):
-
-        Thread.__init__(self)
         
         self.name = "car2go"
         self.city = city
+        self.session = requests.Session()
         
     def log_message (self, scope, status):
         
@@ -40,21 +36,6 @@ class Car2Go_Gatherer(Thread):
                             self.city,\
                             scope,\
                             status)
-            
-    def get_feed (self):
-        
-        self.url = 'https://www.car2go.com/api/v2.1/vehicles?oauth_consumer_key=polito&format=json&loc=' + self.city
-        
-        try:
-            feed = json.loads(requests.get(self.url).text)
-            message = self.log_message("feed","success")
-        except:
-            print_exception()
-            feed = {}
-            message = self.log_message("feed","error")
-        print message
-
-        return feed
                 
     def to_DB (self):
     
@@ -66,13 +47,41 @@ class Car2Go_Gatherer(Thread):
                      "snapshot": self.current_feed
                      }
                     )
+            
+    def get_feed (self):
+        
+        self.url = 'https://www.car2go.com/api/v2.1/vehicles?oauth_consumer_key=polito&format=json&loc=' + self.city
+        
+        try:
+            feed = json.loads(self.session.get(self.url).text)
+            message = self.log_message("feed","success")
+        except:
+            print_exception()
+            feed = {}
+            message = self.log_message("feed","error")
+        print message
+
+        self.current_feed = feed
         
     def run(self):
                 
         while True:
-            self.current_feed = self.get_feed()
+            self.get_feed()
             self.to_DB()
             self.last_feed = self.current_feed
             time.sleep(60)
 
-Car2Go_Gatherer(sys.argv[1]).start()
+#gatherer = Car2Go_Gatherer(sys.argv[1])
+#gatherer.run()
+
+from conf import cities
+
+crawlers = {}
+for city in cities["car2go"]:
+    crawlers[city] = Car2Go_Gatherer(city)
+
+while True:
+    for city in cities:
+        crawlers[city].get_feed()
+        crawlers[city].to_DB()
+    time.sleep(60)
