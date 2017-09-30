@@ -1,7 +1,7 @@
 import datetime
 
 from pymongo import MongoClient
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient('mongodb://192.168.1.40:27017/')
 
 import logging
 logging.basicConfig(filename=datetime.datetime.now().strftime("%Y-%m-%d") + ".log", 
@@ -31,4 +31,9 @@ class DataBaseProxy (object):
         except:
             logging.debug(self.log_message(record, "insert", "error"))
 
+    def find_last (self, collection, query):
+        
+        return self.db[collection].find \
+                    (query).sort([("_id", -1)]).limit(1)
+            
 dbp = DataBaseProxy()

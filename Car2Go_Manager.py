@@ -1,10 +1,11 @@
+#!/usr/bin/python
 import sys
 
 def print_exception ():
     exc_type, exc_obj, exc_tb = sys.exc_info()
-    print exc_type
-    print exc_obj
-    print exc_tb.tb_lineno   
+    print (exc_type)
+    print (exc_obj)
+    print (exc_tb.tb_lineno)  
 
 import datetime
 import time
@@ -61,7 +62,7 @@ class Car2Go_Manager (Thread):
             self.current = pd.DataFrame(doc["snapshot"]["placemarks"]).set_index("name")
             self.current = pre_process(self.current)        
         except:
-            print "Exception in " + self.name
+            print ("Exception in " + self.name)
             print_exception()
             
         if not self.current.equals(self.last):
@@ -138,5 +139,7 @@ class Car2Go_Manager (Thread):
             self.fleet = self.fleet.union(self.current.index)
 #                print self.fleet.shape
         
-#manager = Car2Go_Manager(sys.argv[1])
-#manager.start()
+manager = Car2Go_Manager("Firenze")
+while True:
+    manager.check()
+    time.sleep(10)

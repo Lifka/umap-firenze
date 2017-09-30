@@ -1,10 +1,12 @@
+#!/usr/bin/python
+
 import sys
 
 def print_exception ():
     exc_type, exc_obj, exc_tb = sys.exc_info()
-    print exc_type
-    print exc_obj
-    print exc_tb.tb_lineno   
+    print (exc_type)
+    print (exc_obj)
+    print (exc_tb.tb_lineno)   
     
 from threading import Thread
 
@@ -59,29 +61,25 @@ class Car2Go_Gatherer():
             print_exception()
             feed = {}
             message = self.log_message("feed","error")
-        print message
+        print (message)
 
         self.current_feed = feed
         
-    def run(self):
+    def run(crawler):
                 
         while True:
-            self.get_feed()
-            self.to_DB()
-            self.last_feed = self.current_feed
+            crawler.get_feed()
+            crawler.to_DB()
+            crawler.last_feed = self.current_feed
             time.sleep(60)
 
 #gatherer = Car2Go_Gatherer(sys.argv[1])
 #gatherer.run()
 
-from conf import cities
-
-crawlers = {}
-for city in cities["car2go"]:
-    crawlers[city] = Car2Go_Gatherer(city)
+city = "Firenze"
+crawler =  Car2Go_Gatherer(city)
 
 while True:
-    for city in cities:
-        crawlers[city].get_feed()
-        crawlers[city].to_DB()
-    time.sleep(60)
+	crawler.get_feed()
+	crawler.to_DB()
+	time.sleep(20)

@@ -1,10 +1,11 @@
+#!/usr/bin/python
 import sys
 
 def print_exception ():
     exc_type, exc_obj, exc_tb = sys.exc_info()
-    print exc_type
-    print exc_obj
-    print exc_tb.tb_lineno   
+    print (exc_type)
+    print (exc_obj)
+    print (exc_tb.tb_lineno)   
     
 from threading import Thread
 
@@ -130,14 +131,14 @@ class Google_Manager(Thread):
                             status)  
    
     def start_session (self):
-        print self.keys.iloc[self.current_key]
+        print (self.keys.iloc[self.current_key])
         try:
             self.gmaps = googlemaps.Client(key=self.keys.iloc[self.current_key])
             self.session_start_time = datetime.datetime.now()
             message = self.log_message("session","success")
         except:
             message = self.log_message("session","error")
-        print message
+        print (message)
  
             
     def get_directions (self, booking):
@@ -151,7 +152,7 @@ class Google_Manager(Thread):
             message = self.log_message("direction_transit","success")
         except:
             message = self.log_message("direction_transit","error")
-        print message
+        print (message)
                 
     def to_DB (self):
     
@@ -174,9 +175,9 @@ class Google_Manager(Thread):
             self.current = pd.DataFrame(doc["bookings"])
 
             if not self.current.equals(self.last):
-                print self.current
+                print (self.current)
 
             self.last = self.current
             time.sleep(10)
 
-#Google_Manager("torino").start()
+Google_Manager("firenze").start()
