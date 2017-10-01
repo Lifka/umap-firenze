@@ -1,5 +1,5 @@
 # UMAP Km4City
-
+This scripts performs the data ingestion and normalization for the car sharing platform car2go
 
 ### Notes
 * Forked from https://github.com/MobilityPolito/UMAP
