@@ -78,8 +78,4 @@ class Car2Go_Gatherer():
 
 city = "Firenze"
 crawler =  Car2Go_Gatherer(city)
-
-while True:
-	crawler.get_feed()
-	crawler.to_DB()
-	time.sleep(20)
+run(crawler)
